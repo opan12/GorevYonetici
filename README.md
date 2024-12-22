@@ -1,8 +1,8 @@
-GörevYönetici Uygulaması
+## GörevYönetici Uygulaması
 
 Bu proje, kullanıcıların görevlerini yönetmelerine yardımcı olan bir görev yönetim sistemidir. Kullanıcılar görevlerini oluşturabilir, güncelleyebilir, tamamlayabilir ve silebilir. Ayrıca JWT (JSON Web Token) kullanılarak kimlik doğrulama sağlanmıştır. Uygulama, Swagger entegrasyonu ile API belgelerine kolay erişim sunar.
 
-Özellikler
+# Özellikler
 
 Görev Yönetimi: Görev ekleme, güncelleme, silme ve listeleme işlemleri.
 
@@ -14,7 +14,7 @@ Pagination: Görevlerin sayfa bazlı görüntülenmesi.
 
 Swagger Desteği: API'yi test etmek ve belgelemek için Swagger UI.
 
-Teknolojiler
+# Teknolojiler
 
 Backend: ASP.NET Core 8.0
 
@@ -27,7 +27,7 @@ Authentication: JWT (JSON Web Token)
 Dependency Injection: ASP.NET Core DI
 
 Diğer: IMemoryCache, ChangeTracker
-Proje Mimarisi
+# Proje Mimarisi
 
 Proje, Onion Architecture prensiplerine uygun olarak geliştirilmiştir:
 
