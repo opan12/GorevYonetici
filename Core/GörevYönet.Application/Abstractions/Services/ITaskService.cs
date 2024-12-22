@@ -1,5 +1,4 @@
-﻿using GörevYönet.Domain.DTOs;
-using GörevYönet.Domain.Entitites;
+﻿using GörevYönet.Domain.Entitites;
 using GörevYönet.Domain.Enum;
 using System;
 using System.Collections.Generic;
@@ -14,7 +13,7 @@ namespace GörevYönet.Application.Abstractions.Services
         Task<TaskItem> AddTask(TaskItem task);
         Task<IEnumerable<TaskItem>> GetTasks();
         Task<TaskItem> GetTaskById(Guid id);
-        Task<TaskItem> UpdateTask(TaskItem updatedTask);
+        Task<TaskItem> UpdateTask(Guid id, TaskItem updatedTask);
         Task<bool> DeleteTask(Guid id);
         Task<IEnumerable<TaskItem>> GetTasksByDateRange(DateTime startDate, DateTime endDate);
         Task<IEnumerable<TaskItem>> GetTasksByGroupingKeyAsync(TaskGroupingKey groupingKey, string userId);
@@ -22,5 +21,6 @@ namespace GörevYönet.Application.Abstractions.Services
 
 
         Task<IEnumerable<TaskItem>> GetSortedTasksByUserId(string userId);
+        void CheckModifiedTaskItems();
     }
 }

@@ -15,6 +15,7 @@ public class ApplicationDbContext : IdentityDbContext<User>
 
         public DbSet<User> Users { get; set; }
         public DbSet<TaskItem> TaskItems { get; set; }
+
     }
 
 

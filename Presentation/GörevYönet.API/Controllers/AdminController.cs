@@ -1,6 +1,7 @@
 ﻿using GörevYönet.Application.Abstractions.Services;
 using GörevYönet.Domain.Entitites;
 using GörevYönet.Models.ViewModel;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -9,6 +10,8 @@ namespace GörevYönet.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "Admin")]
+
     public class AdminController : ControllerBase
     {
         private readonly ITaskService _taskService;
@@ -26,11 +29,27 @@ namespace GörevYönet.API.Controllers
 
         }
         [HttpGet]
-        public async Task<IActionResult> GetTasks()
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetTasks([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             var tasks = await _taskService.GetTasks();
-            return Ok(tasks);
+            var pagedTasks = tasks
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            var totalTasks = tasks.Count();
+            var totalPages = (int)Math.Ceiling(totalTasks / (double)pageSize);
+
+            return Ok(new
+            {
+                Tasks = pagedTasks,
+                Page = page,
+                TotalPages = totalPages,
+                TotalTasks = totalTasks
+            });
         }
+
         [HttpPost("register")]
         public async Task<IActionResult> AdminRegister([FromBody] RegisterModel model)
         {
@@ -41,7 +60,7 @@ namespace GörevYönet.API.Controllers
 
             var user = new User
             {
-                UserName = "Admin",
+                UserName = "Admin12",
                 Firstname = "Admin",
                 Lastname ="Admin",
                 Email = "Admin",
@@ -51,7 +70,6 @@ namespace GörevYönet.API.Controllers
 
             if (result.Succeeded)
             {
-                // Kullanıcıya "User" rolünü atayın
                 if (!await _roleManager.RoleExistsAsync("Admin"))
                 {
                     await _roleManager.CreateAsync(new IdentityRole("Admin"));

@@ -7,9 +7,11 @@ using GörevYönet.Application.Abstractions.Services;
 using GörevYönet.Domain.Entitites;
 
 using AutoMapper;
-using GörevYönet.Domain.DTOs;
 using Microsoft.AspNetCore.Identity;
 using GörevYönet.Domain.Enum;
+using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
+using GörevYönet.Persistence.Context;
 
 
 namespace GörevYönetici.Controllers
@@ -20,13 +22,16 @@ namespace GörevYönetici.Controllers
     {
         private readonly ITaskService _taskService;
         private readonly UserManager<User> _userManager;
+        private readonly ApplicationDbContext _context;
 
 
 
-        public TaskController(ITaskService taskService, UserManager<User> userManager)
+
+        public TaskController(ITaskService taskService, UserManager<User> userManager, ApplicationDbContext context)
         {
             _taskService = taskService;
             _userManager = userManager;
+            _context = context;
 
 
 
@@ -38,28 +43,31 @@ namespace GörevYönetici.Controllers
             {
                 return BadRequest("Invalid task data.");
             }
-            var currentUserName = User.Identity?.Name;
 
-            // Giriş yapan kullanıcının UserId'sini al
-            var userId = _userManager.GetUserId(User);
+            var username = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(username))
+            {
+                return Unauthorized("User ID not found in token.");
+            }
+          
 
-            // DTO -> Entity dönüşüm ve UserId atama
             var taskItem = new TaskItem
             {
                 Id = Guid.NewGuid(),
                 Description = taskDto.Description,
                 DueDate = taskDto.DueDate,
-                IsCompleted =false,
+                IsCompleted = false,
                 Progress = taskDto.Progress,
                 CompletedDate = taskDto.CompletedDate,
                 Priority = taskDto.Priority,
-                UserId = userId, // Kullanıcının kimliğini ata
+                UserId = username 
             };
 
-            await _taskService.AddTask(taskItem); // Servis metodu
+            await _taskService.AddTask(taskItem);
 
             return Ok();
         }
+
 
         [HttpGet("task-priorities")]
         public IActionResult GetTaskPriorities()
@@ -84,30 +92,41 @@ namespace GörevYönetici.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetTasks()
+        public async Task<IActionResult> GetTasks([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            var userId = _userManager.GetUserId(User); // Kullanıcı kimliğini al
-            var tasks = await _taskService.GetTasks();
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("User ID not found in token.");
+            }
 
-            // Kullanıcının sadece kendi görevlerini almasını sağla
-            var userTasks = tasks.Where(t => t.UserId == userId).ToList();
+            var tasks = await _taskService.GetTasks(); 
+            var userTasks = tasks.Where(t => t.UserId == userId); 
 
-            return Ok(userTasks);
+            var pagedTasks = userTasks
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            var totalTasks = userTasks.Count();
+            var totalPages = (int)Math.Ceiling(totalTasks / (double)pageSize);
+
+            return Ok(new
+            {
+                Tasks = pagedTasks,
+                Page = page,
+                TotalPages = totalPages,
+                TotalTasks = totalTasks
+            });
         }
-
-
 
 
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateTask(Guid id, [FromBody] TaskItem updatedTask)
         {
-            if (id != updatedTask.Id)
-            {
-                return BadRequest("Task ID does not match.");
-            }
+            var result = await _taskService.UpdateTask(id, updatedTask); 
 
-            var result = await _taskService.UpdateTask(updatedTask);
             if (result == null)
             {
                 return NotFound("Task not found or already deleted.");
@@ -116,6 +135,12 @@ namespace GörevYönetici.Controllers
             return Ok(result);
         }
 
+        [HttpPost("check-modified")]
+        public IActionResult CheckModified()
+        {
+            _taskService.CheckModifiedTaskItems();
+            return Ok("Modified entries logged successfully.");
+        }
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTask(Guid id)
         {

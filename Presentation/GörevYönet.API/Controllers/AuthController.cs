@@ -5,6 +5,9 @@ using GörevYönet.Models.ViewModel;
 using GörevYönet.Domain.Entitites;
 using System.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Memory; // Eklenen
+
 
 namespace GörevYönetici.Controllers
 {
@@ -15,36 +18,39 @@ namespace GörevYönetici.Controllers
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly IMemoryCache _cache; 
 
 
-        public AuthController(UserManager<User> userManager, SignInManager<User> signInManager, RoleManager<IdentityRole> roleManager)
+
+        public AuthController(UserManager<User> userManager, SignInManager<User> signInManager, RoleManager<IdentityRole> roleManager, IMemoryCache cache)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _roleManager = roleManager;
+
         }
+  
+      
+
+       
+
         [HttpGet("roles")]
         public async Task<IActionResult> GetRoles()
         {
-            // Tüm mevcut rolleri al
             var roles = await _roleManager.Roles.ToListAsync();
 
-            // Rolleri listele
             var roleList = new List<string>();
             foreach (var role in roles)
             {
-                roleList.Add(role.Name); // Sadece rol adını ekle
+                roleList.Add(role.Name); 
             }
 
-            return Ok(roleList); // Rolleri döndür
+            return Ok(roleList); 
         }
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterModel model)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+          
 
             var user = new User
             {
@@ -54,11 +60,10 @@ namespace GörevYönetici.Controllers
                 Email = model.Email,
             };
 
-            var result = await _userManager.CreateAsync(user, model.Password); // Şifre ile birlikte kullanıcının oluşturulması
+            var result = await _userManager.CreateAsync(user, model.Password); 
 
             if (result.Succeeded)
             {
-                // Kullanıcıya "User" rolünü atayın
                 if (!await _roleManager.RoleExistsAsync("User"))
                 {
                     await _roleManager.CreateAsync(new IdentityRole("User"));

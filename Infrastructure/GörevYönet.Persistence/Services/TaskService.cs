@@ -9,7 +9,6 @@ using GörevYönet.Domain.Entitites;
 using GörevYönet.Domain.Enum;
 using GörevYönet.Persistence.Context;
 using AutoMapper;
-using GörevYönet.Domain.DTOs;
 
 namespace GörevYönet.Services
 {
@@ -44,13 +43,12 @@ namespace GörevYönet.Services
             return await _context.TaskItems
 .FirstOrDefaultAsync(t => t.Id == id && !t.IsDeleted);
         }
-
         public async Task<TaskItem> UpdateTask(Guid id, TaskItem updatedTask)
         {
             var existingTask = await _context.TaskItems.FindAsync(id);
             if (existingTask == null || existingTask.IsDeleted)
             {
-                return null; // Eğer silinmiş veya bulunamıyor ise null döneriz.
+                return null;
             }
 
             existingTask.Description = updatedTask.Description;
@@ -65,12 +63,13 @@ namespace GörevYönet.Services
             return existingTask;
         }
 
+
         public async Task<bool> DeleteTask(Guid id)
         {
             var existingTask = await _context.TaskItems.FindAsync(id);
             if (existingTask == null || existingTask.IsDeleted)
             {
-                return false; // Silinmiş veya bulunamayan görev
+                return false; 
             }
 
             existingTask.IsDeleted = true;
@@ -130,5 +129,7 @@ namespace GörevYönet.Services
         {
             throw new NotImplementedException();
         }
+
+    
     }
 }

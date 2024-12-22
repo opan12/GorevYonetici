@@ -1,23 +1,21 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-
+using Microsoft.Extensions.DependencyInjection;
 using GörevYönet.Application.Abstractions.Services;
 using GörevYönet.Domain.Entitites;
 using GörevYönet.Persistence.Context;
 using GörevYönet.Services;
+using Microsoft.Extensions.Caching.Memory;
 
-
-// Add services to the container.
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddScoped<ITaskService, TaskService>();
-
-
+builder.Services.AddMemoryCache();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -55,31 +53,47 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-
-builder.Services.AddControllersWithViews();
-
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-// Identity ve Jwt yapýlandýrmasý
+// Identity and JWT configuration
 builder.Services.AddIdentity<User, IdentityRole>(options =>
 {
     options.SignIn.RequireConfirmedAccount = false;
 })
-.AddRoles<IdentityRole>() // Rolleri ekliyoruz
+.AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+    };
+});
 
-
-// Rolleri eklemek için scope oluþturuyoruz
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    dbContext.Database.Migrate();
+
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     var roles = new[] { "Admin", "User" };
     foreach (var role in roles)
@@ -91,7 +105,7 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// Middleware ve HTTP request pipeline
+// Middleware and HTTP request pipeline
 if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 {
     app.UseSwagger();
@@ -103,7 +117,7 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 }
 
 app.UseHttpsRedirection();
-app.UseAuthentication(); // Authentication middleware
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
