@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace GörevYönet.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class InialCreate : Migration
+    public partial class IniaLCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

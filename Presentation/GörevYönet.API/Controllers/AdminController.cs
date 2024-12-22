@@ -10,7 +10,6 @@ namespace GörevYönet.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin")]
 
     public class AdminController : ControllerBase
     {
@@ -60,7 +59,7 @@ namespace GörevYönet.API.Controllers
 
             var user = new User
             {
-                UserName = "Admin12",
+                UserName = "Admin",
                 Firstname = "Admin",
                 Lastname ="Admin",
                 Email = "Admin",
