@@ -180,12 +180,7 @@ namespace GörevYönetici.Controllers
             return Ok(monthlyTasks);
         }
 
-        [HttpGet("sorted")]
-        public async Task<IActionResult> GetSortedTasks()
-        {
-            var tasks = await _taskService.GetSortedTasks();
-            return Ok(tasks);
-        }
+       
         [HttpGet("task-grouping-keys")]
         public IActionResult GetTaskGroupingKeys()
         {

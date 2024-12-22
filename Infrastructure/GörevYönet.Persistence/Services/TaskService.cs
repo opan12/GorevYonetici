@@ -120,16 +120,15 @@ namespace GörevYönet.Services
             throw new NotImplementedException();
         }
 
-        public Task<IEnumerable<TaskItem>> GetSortedTasks()
-        {
-            throw new NotImplementedException();
-        }
-
+       
         public Task<IEnumerable<TaskItem>> GetSortedTasksByUserId(string userId)
         {
             throw new NotImplementedException();
         }
 
-    
+        public Task<IEnumerable<TaskItem>> GetSortedTasks()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

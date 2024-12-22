@@ -27,6 +27,7 @@ namespace GörevYönet.API.Controllers
 
 
         }
+
         [HttpGet]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetTasks([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
